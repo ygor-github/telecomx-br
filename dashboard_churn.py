@@ -2,6 +2,11 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
+
+
+
+
+
 # --- Configurações da Página ---
 st.set_page_config(
     page_title="Dashboard de Análise de Churn de Telecom",
@@ -286,129 +291,135 @@ if selected_numeric:
         * Observe a concentração dos pontos `Sim` (Evasão) em certas áreas do gráfico. Isso pode indicar combinações de `Meses_Contrato` e `Custo_Mensal` (ou outras variáveis) que são mais arriscadas.
         * Por exemplo, uma alta concentração de pontos `Sim` com `Meses_Contrato` baixo e `Custo_Mensal` alto sugere que clientes novos com altos gastos tendem a evadir.
         """)
-        
-from matplotlib.colors import to_rgb
+ 
+
 import numpy as np
+import plotly.express as px
+from matplotlib.colors import to_rgb
+import streamlit as st
+
+# Paleta de cores personalizada
+paleta_cores = {
+    'Sim': '#FF5A3C',      # rojo fuerte
+    'Não': '#7079FF',      # azul vibrante
+    '1': '#FF5A3C',
+    '0': '#7079FF',
+    'Feminino': '#FF5A3C',
+    'Masculino': '#7079FF',
+    'Yes': '#FF5A3C',
+    'No': '#7079FF'
+}
 
 def rgb_to_hex(rgb):
     return '#{:02x}{:02x}{:02x}'.format(
         int(rgb[0]*255), int(rgb[1]*255), int(rgb[2]*255)
     )
 
-# --- 5. Análise de Clientes Novos com Alto Custo Mensal ---
-st.header("5. Análise de Clientes Novos com Alto Custo Mensal")
-st.markdown("""
-Esta seção destaca um segmento com maior propensão ao **churn**:  
-**Clientes com `Meses_Contrato` ≤ 5 e `Custo_Mensal` ≥ 70 R$**.  
-Abaixo você pode explorar as principais características desse grupo.
-""")
+def gerar_mapa_cores_degradado(df, coluna, paleta):
+    prop = df[coluna].value_counts(normalize=True).sort_values(ascending=False)
+    categorias_ordenadas = prop.index.tolist()
 
-# Limites
-limite_meses_contrato = 5
-limite_custo_mensal = 70
-
-# Filtrar segmento
-clientes_segmento = df[
-    (df['Meses_Contrato'] <= limite_meses_contrato) &
-    (df['Custo_Mensal'] >= limite_custo_mensal)
-]
-
-if clientes_segmento.empty:
-    st.warning("⚠️ Nenhum cliente atende aos critérios de segmentação. Verifique os dados ou ajuste os limites.")
-else:
-    st.subheader(f"Resumo do Segmento (N = {len(clientes_segmento)})")
-    st.metric("📉 Taxa de Churn", f"{clientes_segmento['Churn'].mean()*100:.2f}%")
-    st.metric("💰 Custo Médio", f"{clientes_segmento['Custo_Mensal'].mean():.2f} R$")
-    st.metric("📆 Meses de Contrato Médio", f"{clientes_segmento['Meses_Contrato'].mean():.2f}")
-
-    st.subheader("🎯 Selecione até 4 Características para Visualizar")
-
-    colunas_categoricas = [
-        'Cliente_Senior', 'Tem_Parceiro', 'Tem_Dependentes', 'Fatura_Digital',
-        'Genero', 'Servico_Internet', 'Metodo_Pagamento', 'Tipo_Contrato',
-        'Servico_Telefone', 'Multiplas_Linhas', 'Seguranca_Online',
-        'Backup_Online', 'Protecao_Dispositivo', 'Suporte_Tecnico',
-        'Streaming_TV', 'Streaming_Filmes'
-    ]
-
-    # Calcular proporção e ordenar métodos de pagamento por porcentagem decrescente
-    prop_metodos = clientes_segmento['Metodo_Pagamento'].value_counts(normalize=True).sort_values(ascending=False)
-    metodos_ordenados = prop_metodos.index.tolist()
-
-    cor_vermelha = np.array(to_rgb(paleta_cores['Sim']))   # rojo puro
-    cor_azul = np.array(to_rgb(paleta_cores['Não']))       # azul puro
-
-    num_cores = len(metodos_ordenados)
-    if num_cores > 1:
+    cor_vermelha = np.array(to_rgb(paleta['Sim']))   # rojo puro
+    cor_azul = np.array(to_rgb(paleta['Não']))       # azul puro
+    n = len(categorias_ordenadas)
+    if n > 1:
         degradado_rgb = [
-            cor_vermelha + (cor_azul - cor_vermelha) * i/(num_cores-1)
-            for i in range(num_cores)
+            cor_vermelha + (cor_azul - cor_vermelha) * i/(n-1)
+            for i in range(n)
         ]
     else:
         degradado_rgb = [cor_vermelha]
 
     degradado_hex = [rgb_to_hex(c) for c in degradado_rgb]
-    mapa_cores_metodo_pagamento = dict(zip(metodos_ordenados, degradado_hex))
+    return dict(zip(categorias_ordenadas, degradado_hex))
 
-    def plot_coluna_categ(df, coluna):
-        dados = df.copy()
+def plot_segment_category(df_segment, coluna):
+    dados = df_segment.copy()
 
-        valores_unicos = set(dados[coluna].dropna().unique())
-        if valores_unicos <= {0, 1}:
-            dados[coluna] = dados[coluna].map({1: 'Sim', 0: 'Não'})
+    valores_unicos = set(dados[coluna].dropna().unique())
+    if valores_unicos <= {0, 1}:
+        dados[coluna] = dados[coluna].map({1: 'Sim', 0: 'Não'})
 
-        prop = dados[coluna].value_counts(normalize=True).reset_index()
-        prop.columns = [coluna, 'Proporção']
+    prop = dados[coluna].value_counts(normalize=True).reset_index()
+    prop.columns = [coluna, 'Proporção']
 
-        if coluna == 'Metodo_Pagamento':
-            color_map = mapa_cores_metodo_pagamento
+    if coluna in ['Metodo_Pagamento', 'Tipo_Contrato', 'Servico_Internet']:
+        color_map = gerar_mapa_cores_degradado(dados, coluna, paleta_cores)
+    else:
+        color_map = paleta_cores
+
+    fig = px.bar(
+        prop,
+        x='Proporção',
+        y=coluna,
+        orientation='h',
+        color=coluna,
+        color_discrete_map=color_map,
+        text='Proporção',
+        template='plotly_white'
+    )
+    fig.update_layout(
+        showlegend=False,
+        height=300,
+        margin=dict(l=40, r=10, t=30, b=30),
+        xaxis_tickformat='.0%',
+        xaxis_title=None
+    )
+    fig.update_traces(
+        texttemplate='%{text:.0%}',
+        textposition='inside',
+        textfont=dict(color='white', size=16, family='Arial')
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+# --- 5. Análise de Segmento Específico: Clientes Novos com Alto Custo Mensal ---
+st.header("5. Análise de Clientes Novos com Alto Custo Mensal")
+st.markdown("""
+Esta seção foca em um segmento de clientes particularmente propenso ao churn:  
+**Clientes com `Meses_Contrato` baixo (<= 5 meses) e `Custo_Mensal` alto (>= 70 R$).**  
+Vamos analisar as características comuns deste grupo.
+""")
+
+limite_meses_contrato_novo = 5
+limite_custo_mensal_alto = 70
+
+clientes_segmento_risco = df[
+    (df['Meses_Contrato'] <= limite_meses_contrato_novo) &
+    (df['Custo_Mensal'] >= limite_custo_mensal_alto)
+]
+
+if not clientes_segmento_risco.empty:
+    st.subheader(f"Visão Geral do Segmento (N = {len(clientes_segmento_risco)} clientes)")
+    st.write(f"**Taxa de Churn neste segmento:** {clientes_segmento_risco['Churn'].mean() * 100:.2f}%")
+    st.write(f"**Custo Mensal Médio:** {clientes_segmento_risco['Custo_Mensal'].mean():.2f} R$")
+    st.write(f"**Meses de Contrato Médio:** {clientes_segmento_risco['Meses_Contrato'].mean():.2f} meses")
+
+    st.subheader("Distribuição de Características Categóricas no Segmento de Risco")
+
+    categorical_cols_for_segment_analysis = [
+        'Genero', 'Servico_Internet', 'Tipo_Contrato', 'Metodo_Pagamento',
+        'Cliente_Senior', 'Tem_Parceiro', 'Tem_Dependentes', 'Servico_Telefone',
+        'Multiplas_Linhas', 'Seguranca_Online', 'Backup_Online', 'Protecao_Dispositivo',
+        'Suporte_Tecnico', 'Streaming_TV', 'Streaming_Filmes', 'Fatura_Digital'
+    ]
+
+    col_cat1, col_cat2 = st.columns(2)
+    current_col = 0
+
+    for col in categorical_cols_for_segment_analysis:
+        if current_col % 2 == 0:
+            with col_cat1:
+                plot_segment_category(clientes_segmento_risco, col)
         else:
-            color_map = paleta_cores
+            with col_cat2:
+                plot_segment_category(clientes_segmento_risco, col)
+        current_col += 1
 
-        fig = px.bar(
-            prop,
-            x='Proporção',
-            y=coluna,
-            orientation='h',
-            color=coluna,
-            color_discrete_map=color_map,
-            text='Proporção',
-            template='plotly_white'
-        )
-        fig.update_layout(
-            showlegend=False,
-            height=300,
-            margin=dict(l=40, r=10, t=30, b=30),
-            xaxis_tickformat='.0%',
-            xaxis_title=None
-        )
-        fig.update_traces(
-            texttemplate='%{text:.0%}',
-            textposition='inside',
-            textfont=dict(color='white', size=18, family='Arial Black')
-        )
-        return fig
-
-    # Layout: gráficos na coluna esquerda, seletor na direita
-    col1, col2 = st.columns([3, 1])
-
-    with col2:
-        colunas_selecionadas = st.multiselect(
-            "Escolha até 4 características para visualizar:",
-            colunas_categoricas,
-            default=colunas_categoricas[:4],
-            max_selections=4
-        )
-
-    with col1:
-        if colunas_selecionadas:
-            for coluna in colunas_selecionadas:
-                fig = plot_coluna_categ(clientes_segmento, coluna)
-                st.plotly_chart(fig, use_container_width=True)
-        else:
-            st.info("👈 Selecione até 4 características à direita para visualizar os gráficos.")
-
-    st.info("🔴 'Sim' indica presença de característica (potencial risco de churn), em vermelho. 🔵 'Não' representa ausência, em azul.")
+    st.markdown("""
+    **Insights para o Segmento de Risco:** Os gráficos acima revelam as proporções de cada característica dentro do grupo de clientes novos com alto custo mensal. Observe quais categorias são mais prevalentes para entender melhor o perfil desses clientes de alto risco.
+    """)
+else:
+    st.warning("Não há clientes que correspondam aos critérios de 'Novo com Alto Custo Mensal'. Ajuste os limites ou verifique os dados.")
 
 
 # --- Rodapé ---
