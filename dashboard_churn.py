@@ -1,7 +1,8 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-
+import numpy as np
+from matplotlib.colors import to_rgb
 
 
 
@@ -292,23 +293,6 @@ if selected_numeric:
         * Por exemplo, uma alta concentração de pontos `Sim` com `Meses_Contrato` baixo e `Custo_Mensal` alto sugere que clientes novos com altos gastos tendem a evadir.
         """)
  
-
-import numpy as np
-import plotly.express as px
-from matplotlib.colors import to_rgb
-import streamlit as st
-
-# Paleta de cores personalizada
-paleta_cores = {
-    'Sim': '#FF5A3C',      # rojo fuerte
-    'Não': '#7079FF',      # azul vibrante
-    '1': '#FF5A3C',
-    '0': '#7079FF',
-    'Feminino': '#FF5A3C',
-    'Masculino': '#7079FF',
-    'Yes': '#FF5A3C',
-    'No': '#7079FF'
-}
 
 def rgb_to_hex(rgb):
     return '#{:02x}{:02x}{:02x}'.format(
