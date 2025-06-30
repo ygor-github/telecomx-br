@@ -25,11 +25,14 @@ Empresas de telecomunicações enfrentam o desafio constante de reter seus clien
 
 ## Estrutura do Repositório
 
-* `telecomx-br.ipynb`: O Jupyter Notebook principal contendo todo o fluxo de trabalho de EDA e pré-processamento.
-* `dashboard_churn.py`: O script Python para o dashboard interativo construído com Streamlit.
-* `telecom_churn_processed_data.parquet`: O dataset processado e salvo, pronto para ser utilizado pelo dashboard e por futuras etapas de modelagem.
-* `data/`: (Opcional, crie esta pasta se seu dataset original estiver aqui) Pasta para armazenar o dataset original.
-* `images/`: (Opcional, crie esta pasta) Pasta para armazenar quaisquer imagens de gráficos estáticos ou screenshots do dashboard que você queira incluir no README.
+
+* `telecomx-br.ipynb`: Notebook Jupyter principal contendo todo o fluxo de trabalho de EDA e pré-processamento.
+* `dashboard_churn.py`: Script Python para o dashboard interativo construído com Streamlit.
+* `telecom_churn_processed_data.parquet`: Dataset processado e salvo, pronto para ser utilizado pelo dashboard e por futuras etapas de modelagem.
+* `requirements.txt`: Contém os pacotes necessários para o deploy do dashboard.
+* `graficos_interativos/`: Contém os arquivos dos gráficos interativos em formato `.html`.
+* `imagens/`: Pasta para armazenar quaisquer imagens de gráficos estáticos ou capturas de tela.
+
 
 ## Análise Exploratória de Dados (EDA)
 
@@ -54,6 +57,8 @@ O Jupyter Notebook `telecomx-br.ipynb` detalha os seguintes passos:
 
 ## Dashboard Interativo (Streamlit)
 
+ [Dashboard](https://telecomx.streamlit.app/)
+ 
 O dashboard `dashboard_churn.py` permite uma exploração dinâmica dos insights gerados na EDA. Ele inclui:
 
 * Visão geral da proporção de churn.
